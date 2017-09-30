@@ -21183,11 +21183,11 @@ var MyEditor = function (_React$Component) {
       var maxDepth = 4;
       this.onChange(_draftJs.RichUtils.onTab(e, this.state.editorState, maxDepth));
     }
-  }, {
-    key: '_onBoldClick',
-    value: function _onBoldClick() {
-      this.onChange(_draftJs.RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
-    }
+
+    // _onBoldClick() {
+    //   this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
+    // }
+
   }, {
     key: '_toggleBlockType',
     value: function _toggleBlockType(blockType) {
@@ -21204,8 +21204,6 @@ var MyEditor = function (_React$Component) {
       var editorState = this.state.editorState;
 
       var className = _Rich2.default['RichEditor-editor'];
-      console.log(_Rich2.default);
-      console.log(className);
       var contentState = editorState.getCurrentContent();
 
       if (!contentState.hasText()) {

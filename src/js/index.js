@@ -34,9 +34,9 @@ class MyEditor extends React.Component {
     this.onChange(RichUtils.onTab(e, this.state.editorState, maxDepth));
   }
 
-  _onBoldClick() {
-    this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
-  }
+  // _onBoldClick() {
+  //   this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
+  // }
 
   _toggleBlockType(blockType) {
     this.onChange(RichUtils.toggleBlockType(this.state.editorState, blockType));
@@ -50,8 +50,6 @@ class MyEditor extends React.Component {
 
     const {editorState} = this.state;
     let className = styles['RichEditor-editor'];
-    console.log(styles);
-    console.log(className);
     var contentState = editorState.getCurrentContent();
 
     if (!contentState.hasText()) {
