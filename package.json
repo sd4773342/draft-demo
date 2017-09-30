@@ -21,8 +21,12 @@
     "css-loader": "^0.25.0",
     "draft-js": "^0.10.3",
     "fetch": "^1.1.0",
+    "immutable": "^3.8.1",
+    "less": "^2.7.2",
+    "less-loader": "^4.0.5",
     "react": "^15.6.2",
     "react-dom": "^15.6.2",
+    "style-loader": "^0.18.2",
     "webpack": "^3.5.5",
     "webpack-dev-server": "^2.7.1"
   },

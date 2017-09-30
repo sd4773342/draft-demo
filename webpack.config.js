@@ -28,11 +28,12 @@ module.exports = {
         }
       }, {
         test: /\.css$/,
-        loader: "style-loader!css-loader"
+        //loader: "style-loader!css-loader"
         //loader: 'style-loader!css-loader?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]'
+        loader: 'style-loader!css-loader?modules&importLoaders=1&localIdentName=[local]'
       }, {
         test: /\.less$/,
-        loader: "style-loader!css-loader!less-loader"
+        loader: "style-loader!css-loader?modules&importLoaders=1&localIdentName=[local]!less-loader"
       }
     ]
   },
