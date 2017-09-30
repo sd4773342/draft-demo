@@ -21131,11 +21131,64 @@ var _Rich2 = _interopRequireDefault(_Rich);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function findLinkEntities(contentBlock, callback) {
+  contentBlock.findEntityRanges(function (character) {
+    var entityKey = character.getEntity();
+    return entityKey !== null && _draftJs.Entity.get(entityKey).getType() === 'LINK';
+  }, callback);
+}
+
+var Link = function Link(props) {
+  var _Entity$get$getData = _draftJs.Entity.get(props.entityKey).getData(),
+      url = _Entity$get$getData.url;
+
+  return _react2.default.createElement(
+    'a',
+    { href: url, style: styles2.link },
+    props.children
+  );
+};
+
+var styles2 = {
+  root: {
+    fontFamily: '\'Georgia\', serif',
+    padding: 20,
+    width: 600
+  },
+  buttons: {
+    marginBottom: 10
+  },
+  urlInputContainer: {
+    marginBottom: 10
+  },
+  urlInput: {
+    fontFamily: '\'Georgia\', serif',
+    marginRight: 10,
+    padding: 3
+  },
+  editor: {
+    border: '1px solid #ccc',
+    cursor: 'text',
+    minHeight: 80,
+    padding: 10
+  },
+  button: {
+    marginTop: 10,
+    textAlign: 'center'
+  },
+  link: {
+    color: '#3b5998',
+    textDecoration: 'underline'
+  }
+};
 
 var MyEditor = function (_React$Component) {
   _inherits(MyEditor, _React$Component);
@@ -21145,8 +21198,15 @@ var MyEditor = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (MyEditor.__proto__ || Object.getPrototypeOf(MyEditor)).call(this, props));
 
+    var decorator = new _draftJs.CompositeDecorator([{
+      strategy: findLinkEntities,
+      component: Link
+    }]);
+
     _this.state = {
-      editorState: _draftJs.EditorState.createEmpty()
+      editorState: _draftJs.EditorState.createEmpty(decorator),
+      showURLInput: false,
+      urlValue: ''
     };
     _this.focus = function () {
       return _this.refs.editor.focus();
@@ -21154,6 +21214,17 @@ var MyEditor = function (_React$Component) {
     _this.onChange = function (editorState) {
       return _this.setState({ editorState: editorState });
     };
+    _this.logState = function () {
+      var content = _this.state.editorState.getCurrentContent();
+      console.log((0, _draftJs.convertToRaw)(content));
+    };
+    _this.promptForLink = _this._promptForLink.bind(_this);
+    _this.onURLChange = function (e) {
+      return _this.setState({ urlValue: e.target.value });
+    };
+    _this.confirmLink = _this._confirmLink.bind(_this);
+    _this.onLinkInputKeyDown = _this._onLinkInputKeyDown.bind(_this);
+    _this.removeLink = _this._removeLink.bind(_this);
     _this.handleKeyCommand = _this.handleKeyCommand.bind(_this);
     _this.onTab = function (e) {
       return _this._onTab(e);
@@ -21183,11 +21254,11 @@ var MyEditor = function (_React$Component) {
       var maxDepth = 4;
       this.onChange(_draftJs.RichUtils.onTab(e, this.state.editorState, maxDepth));
     }
-
-    // _onBoldClick() {
-    //   this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
-    // }
-
+  }, {
+    key: '_onBoldClick',
+    value: function _onBoldClick() {
+      this.onChange(_draftJs.RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
+    }
   }, {
     key: '_toggleBlockType',
     value: function _toggleBlockType(blockType) {
@@ -21199,10 +21270,86 @@ var MyEditor = function (_React$Component) {
       this.onChange(_draftJs.RichUtils.toggleInlineStyle(this.state.editorState, inlineStyle));
     }
   }, {
-    key: 'render',
-    value: function render() {
+    key: '_promptForLink',
+    value: function _promptForLink(e) {
+      var _this2 = this;
+
+      e.preventDefault();
       var editorState = this.state.editorState;
 
+      var selection = editorState.getSelection();
+      if (!selection.isCollapsed()) {
+        this.setState({
+          showURLInput: true,
+          urlValue: ''
+        }, function () {
+          setTimeout(function () {
+            return _this2.refs.url.focus();
+          }, 0);
+        });
+      }
+    }
+  }, {
+    key: '_confirmLink',
+    value: function _confirmLink(e) {
+      var _this3 = this;
+
+      e.preventDefault();
+      var _state = this.state,
+          editorState = _state.editorState,
+          urlValue = _state.urlValue;
+
+      var entityKey = _draftJs.Entity.create('LINK', 'MUTABLE', { url: urlValue });
+      this.setState({
+        editorState: _draftJs.RichUtils.toggleLink(editorState, editorState.getSelection(), entityKey),
+        showURLInput: false,
+        urlValue: ''
+      }, function () {
+        setTimeout(function () {
+          return _this3.refs.editor.focus();
+        }, 0);
+      });
+    }
+  }, {
+    key: '_onLinkInputKeyDown',
+    value: function _onLinkInputKeyDown(e) {
+      if (e.which === 13) {
+        this._confirmLink(e);
+      }
+    }
+  }, {
+    key: '_removeLink',
+    value: function _removeLink(e) {
+      e.preventDefault();
+      var editorState = this.state.editorState;
+
+      var selection = editorState.getSelection();
+      if (!selection.isCollapsed()) {
+        this.setState({
+          editorState: _draftJs.RichUtils.toggleLink(editorState, selection, null)
+        });
+      }
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var _React$createElement;
+
+      var editorState = this.state.editorState;
+
+      var urlInput = void 0;
+      if (this.state.showURLInput) {
+        urlInput = _react2.default.createElement(
+          'div',
+          { style: styles2.urlInputContainer },
+          _react2.default.createElement('input', { onChange: this.onURLChange, ref: 'url', style: styles2.urlInput, type: 'text', value: this.state.urlValue, onKeyDown: this.onLinkInputKeyDown }),
+          _react2.default.createElement(
+            'button',
+            { onMouseDown: this.confirmLink },
+            '\u786E\u5B9A'
+          )
+        );
+      }
       var className = _Rich2.default['RichEditor-editor'];
       var contentState = editorState.getCurrentContent();
 
@@ -21214,16 +21361,41 @@ var MyEditor = function (_React$Component) {
 
       return _react2.default.createElement(
         'div',
-        { className: _Rich2.default["RichEditor-root"] },
-        _react2.default.createElement(BlockStyleControls, { editorState: editorState, onToggle: this.toggleBlockType }),
-        _react2.default.createElement(InlineStyleControls, { editorState: editorState, onToggle: this.toggleInlineStyle }),
+        null,
+        _react2.default.createElement('div', { style: {
+            marginBottom: 10
+          } }),
         _react2.default.createElement(
           'div',
-          { className: className, onClick: this.focus },
-          _react2.default.createElement(_draftJs.Editor, { blockStyleFn: getBlockStyle, customStyleMap: styleMap, editorState: editorState, handleKeyCommand: this.handleKeyCommand, onChange: this.onChange, onTab: this.onTab, placeholder: 'Tell a story...', onFocus: function onFocus() {
-              console.log('focus');
-            }, ref: 'editor', spellCheck: true })
-        )
+          { style: styles2.buttons },
+          _react2.default.createElement(
+            'button',
+            { onMouseDown: this.promptForLink, style: {
+                marginRight: 10
+              } },
+            '\u6DFB\u52A0\u94FE\u63A5'
+          ),
+          _react2.default.createElement(
+            'button',
+            { onMouseDown: this.removeLink },
+            '\u53BB\u9664\u94FE\u63A5'
+          )
+        ),
+        urlInput,
+        _react2.default.createElement(
+          'div',
+          { className: _Rich2.default["RichEditor-root"] },
+          _react2.default.createElement(BlockStyleControls, { editorState: editorState, onToggle: this.toggleBlockType }),
+          _react2.default.createElement(InlineStyleControls, { editorState: editorState, onToggle: this.toggleInlineStyle }),
+          _react2.default.createElement(
+            'div',
+            { className: className, onClick: this.focus },
+            _react2.default.createElement(_draftJs.Editor, (_React$createElement = { blockStyleFn: getBlockStyle, customStyleMap: styleMap, editorState: editorState, handleKeyCommand: this.handleKeyCommand, onChange: this.onChange, onTab: this.onTab, placeholder: 'Tell a story...', ref: 'editor', onFocus: function onFocus() {
+                console.log('focus');
+              } }, _defineProperty(_React$createElement, 'ref', 'editor'), _defineProperty(_React$createElement, 'spellCheck', true), _React$createElement))
+          )
+        ),
+        _react2.default.createElement('input', { onClick: this.logState, style: styles2.button, type: 'button', value: '\u63D0\u4EA4\u5185\u5BB9' })
       );
     }
   }]);
@@ -21255,13 +21427,14 @@ var StyleButton = function (_React$Component2) {
   function StyleButton() {
     _classCallCheck(this, StyleButton);
 
-    var _this2 = _possibleConstructorReturn(this, (StyleButton.__proto__ || Object.getPrototypeOf(StyleButton)).call(this));
+    var _this4 = _possibleConstructorReturn(this, (StyleButton.__proto__ || Object.getPrototypeOf(StyleButton)).call(this));
 
-    _this2.onToggle = function (e) {
+    _this4.onToggle = function (e) {
       e.preventDefault();
-      _this2.props.onToggle(_this2.props.style);
+      //debugger
+      _this4.props.onToggle(_this4.props.style);
     };
-    return _this2;
+    return _this4;
   }
 
   _createClass(StyleButton, [{
